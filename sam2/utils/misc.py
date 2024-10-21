@@ -114,6 +114,7 @@ class AsyncVideoFrameLoader:
         img_mean,
         img_std,
         compute_device,
+        cache_images=True,
     ):
         self.img_paths = img_paths
         self.image_size = image_size
@@ -128,6 +129,7 @@ class AsyncVideoFrameLoader:
         self.video_height = None
         self.video_width = None
         self.compute_device = compute_device
+        self.cache_images = cache_images
 
         # load the first frame to fill video_height and video_width and also
         # to cache it (since it's most likely where the user will click)
@@ -162,7 +164,8 @@ class AsyncVideoFrameLoader:
         img /= self.img_std
         if not self.offload_video_to_cpu:
             img = img.to(self.compute_device, non_blocking=True)
-        self.images[index] = img
+        if self.cache_images:
+            self.images[index] = img
         return img
 
     def __len__(self):
@@ -177,6 +180,7 @@ def load_video_frames(
     img_std=(0.229, 0.224, 0.225),
     async_loading_frames=False,
     compute_device=torch.device("cuda"),
+    cache_images=True,
 ):
     """
     Load the video frames from video_path. The frames are resized to image_size as in
@@ -203,6 +207,7 @@ def load_video_frames(
             img_std=img_std,
             async_loading_frames=async_loading_frames,
             compute_device=compute_device,
+            cache_images=cache_images,
         )
     else:
         raise NotImplementedError(
@@ -218,6 +223,7 @@ def load_video_frames_from_jpg_images(
     img_std=(0.229, 0.224, 0.225),
     async_loading_frames=False,
     compute_device=torch.device("cuda"),
+    cache_images=True,
 ):
     """
     Load the video frames from a directory of JPEG files ("<frame_index>.jpg" format).
@@ -261,6 +267,7 @@ def load_video_frames_from_jpg_images(
             img_mean,
             img_std,
             compute_device,
+            cache_images=cache_images,
         )
         return lazy_images, lazy_images.video_height, lazy_images.video_width
 
